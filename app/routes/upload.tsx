@@ -111,8 +111,9 @@ const Upload = () => {
                 await kv.set(`resume:${uuid}`, JSON.stringify(data));
                 setStatusText('Analysis complete! Redirecting...');
                 console.log(data);
-                
-                
+                navigate(`/resume/${uuid}`);
+
+
             } catch (parseError) {
                 console.error('Failed to parse AI response:', parseError, feedback);
                 setStatusText('Error: Invalid AI response. Please try again.');
