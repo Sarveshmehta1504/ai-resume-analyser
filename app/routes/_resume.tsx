@@ -10,13 +10,12 @@ export const meta = () =>([
   {name: 'description', content: 'Detailed overview of your resume'},
 ])
    
-
-const resume = () => {
-  const {auth,fs,kv, isLoading} = usePuterStore();
+const Resume = () => {
+  const {auth, fs, kv, isLoading} = usePuterStore();
   const {id} = useParams();
   const [imageUrl, setImageUrl] = useState('');
   const [resumeUrl, setResumeUrl] = useState('');
-  const [feedback, setFeedback] = useState<Feedback| null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -25,17 +24,14 @@ const resume = () => {
     if(!isLoading && !auth.isAuthenticated) {
       navigate(`/auth?next=/resume/${id}`);
     }
-  }, [isLoading, auth.isAuthenticated, id, navigate]);
+  }, [isLoading]);
 
   // Load resume data
   useEffect(() => {
-    if (!id || !kv || !fs) return; // Don't run if dependencies not ready
-
     const loadResume = async () => {
       try {
         setDataLoading(true);
-        console.log('Loading resume with id:', id);
-        const resume  = await kv.get(`resume:${id}`);
+        const resume = await kv.get(`resume:${id}`);
         
         if(!resume) {
           console.error('No resume found for id:', id);
@@ -44,54 +40,42 @@ const resume = () => {
         }
         
         const data = JSON.parse(resume as string);
-        console.log('Resume data loaded:', data);
         
         // Load PDF
-        const resumeblob = await fs.read(data.resumePath);
-        if(!resumeblob) {
+        const resumeBlob = await fs.read(data.resumePath);
+        if(!resumeBlob) {
           console.error('Failed to load resume file');
           setDataLoading(false);
           return;
         }
 
-        const pdfBlob = new Blob([resumeblob],{type: 'application/pdf'});
+        const pdfBlob = new Blob([resumeBlob], {type: 'application/pdf'});
         const resumeUrl = URL.createObjectURL(pdfBlob);
         setResumeUrl(resumeUrl);
-        console.log('Resume URL created:', resumeUrl);
 
         // Load Image
-        const imageblob = await fs.read(data.imagePath);
-        if(!imageblob) {
+        const imageBlob = await fs.read(data.imagePath);
+        if(!imageBlob) {
           console.error('Failed to load image file');
           setDataLoading(false);
           return;
         }
         
-        const imageUrl = URL.createObjectURL(imageblob);
+        const imageUrl = URL.createObjectURL(imageBlob);
         setImageUrl(imageUrl);
-        console.log('Image URL created:', imageUrl);
 
-        // Parse feedback if it's a string (handles both string and object formats)
-        try {
-          if (typeof data.feedback === 'string') {
+        // Parse feedback if it's a string
+        if (typeof data.feedback === 'string') {
+          try {
             setFeedback(JSON.parse(data.feedback));
-            console.log('Feedback parsed from string:', data.feedback);
-          } else {
-            setFeedback(data.feedback);
-            console.log('Feedback loaded as object:', data.feedback);
+          } catch (error) {
+            console.error('Error parsing feedback string:', error);
+            setFeedback(null);
           }
-        } catch (feedbackError) {
-          console.error('Error parsing feedback:', feedbackError);
-          // Set empty feedback structure
-          setFeedback({
-            overallScore: 50,
-            ATS: { score: 50, tips: [{ type: "improve" as const, tip: "Error loading feedback" }] },
-            toneAndStyle: { score: 50, tips: [{ type: "improve" as const, tip: "Error", explanation: "Error loading feedback" }] },
-            content: { score: 50, tips: [{ type: "improve" as const, tip: "Error", explanation: "Error loading feedback" }] },
-            structure: { score: 50, tips: [{ type: "improve" as const, tip: "Error", explanation: "Error loading feedback" }] },
-            skills: { score: 50, tips: [{ type: "improve" as const, tip: "Error", explanation: "Error loading feedback" }] }
-          });
+        } else {
+          setFeedback(data.feedback);
         }
+        
         setDataLoading(false);
       } catch (error) {
         console.error('Error loading resume:', error);
@@ -101,6 +85,7 @@ const resume = () => {
     
     loadResume();
   }, [id, kv, fs]);
+
   return (
     <main className='!pt-0'>
       <nav className="resume-nav">
@@ -125,9 +110,8 @@ const resume = () => {
                   src={imageUrl} 
                   className='w-full h-full object-contain rounded-2xl'
                   alt="resume"
-                   />
+                />
               </a>
-
             </div>
           ) : null}
         </section>
@@ -143,14 +127,13 @@ const resume = () => {
                 <Details feedback={feedback}/>
               </div>
             ) : (
-              <img src="/images/resume-scan-2.gif" className="w-full" alt="" />
+              <img src="/images/resume-scan-2.gif" className="w-full" alt="Loading..." />
             )
           }
         </section>
-
       </div>
     </main>
   )
 }
 
-export default resume
+export default Resume

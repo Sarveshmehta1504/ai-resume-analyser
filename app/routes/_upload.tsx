@@ -58,9 +58,7 @@ const Upload = () => {
             id: uuid,
             resumePath: uploadedFile.path,
             imagePath: uploadedImage.path,
-            companyName, 
-            jobTitle, 
-            jobDescription,
+            companyName, jobTitle, jobDescription,
             feedback: '',
         }
         
@@ -87,7 +85,7 @@ const Upload = () => {
             await kv.set(`resume:${uuid}`, JSON.stringify(data));
         } catch (error) {
             console.error('AI analysis failed:', error);
-            // Create default feedback as string - to match the reference implementation
+            // Create default feedback object
             const defaultFeedback = {
                 overallScore: 75,
                 ATS: {
@@ -122,31 +120,24 @@ const Upload = () => {
                     ],
                 },
             };
-            data.feedback = JSON.stringify(defaultFeedback);
+            data.feedback = defaultFeedback;
             await kv.set(`resume:${uuid}`, JSON.stringify(data));
         }
         
         setStatusText('Analysis complete, redirecting...');
-        console.log('Final data:', data);
         navigate(`/resume/${uuid}`);
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log('Form submitted');
         
         const form = e.currentTarget.closest('form');
-        if(!form) {
-            console.error('Form not found');
-            return;
-        }
+        if(!form) return;
         
         const formData = new FormData(form);
         const companyName = formData.get('company-name') as string || '';
         const jobTitle = formData.get('job-title') as string || '';
         const jobDescription = formData.get('job-description') as string || '';
-
-        console.log('Form data:', { companyName, jobTitle, jobDescription, hasFile: !!file });
 
         if(!file) {
             setStatusText('Please upload a resume file');
