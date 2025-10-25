@@ -1,41 +1,79 @@
 import React from 'react'
 
-interface ATSProps {
-  score: number
-  suggestion: { type: "good" | "improve"; tip: string }[]
+interface Suggestion {
+  type: "good" | "improve";
+  tip: string;
 }
 
-const ATS = ({ score, suggestion }: ATSProps) => {
-  const getScoreBadge = (score: number) => {
-    if (score >= 80) return { color: 'bg-badge-green text-badge-green-text', label: 'Excellent', icon: '/icons/ats-good.svg' }
-    if (score >= 60) return { color: 'bg-badge-yellow text-badge-yellow-text', label: 'Good', icon: '/icons/ats-warning.svg' }
-    return { color: 'bg-badge-red text-badge-red-text', label: 'Needs Work', icon: '/icons/ats-bad.svg' }
-  }
+interface ATSProps {
+  score: number;
+  suggestions: Suggestion[];
+}
 
-  const badge = getScoreBadge(score)
+const ATS: React.FC<ATSProps> = ({ score, suggestions = [] }) => {
+  // Determine background gradient based on score
+  const gradientClass = score > 69
+    ? 'from-green-100'
+    : score > 49
+      ? 'from-yellow-100'
+      : 'from-red-100';
+
+  // Determine icon based on score
+  const iconSrc = score > 69
+    ? '/icons/ats-good.svg'
+    : score > 49
+      ? '/icons/ats-warning.svg'
+      : '/icons/ats-bad.svg';
+
+  // Determine subtitle based on score
+  const subtitle = score > 69
+    ? 'Great Job!'
+    : score > 49
+      ? 'Good Start'
+      : 'Needs Improvement';
 
   return (
-    <div className='flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm'>
-      <div className='flex items-center justify-between'>
-        <h3 className='text-2xl font-bold text-gray-800'>ATS Compatibility</h3>
-        <div className={`score-badge ${badge.color}`}>
-          <img src={badge.icon} alt={badge.label} className='w-5 h-5' />
-          <span className='font-semibold'>{score}/100</span>
+    <div className={`bg-gradient-to-b ${gradientClass} to-white rounded-2xl shadow-md w-full p-6`}>
+      {/* Top section with icon and headline */}
+      <div className="flex items-center gap-4 mb-6">
+        <img src={iconSrc} alt="ATS Score Icon" className="w-12 h-12" />
+        <div>
+          <h2 className="text-2xl font-bold">ATS Score - {score}/100</h2>
         </div>
       </div>
-      
-      <div className='flex flex-col gap-3 mt-2'>
-        {suggestion.map((tip, index) => (
-          <div key={index} className='flex items-start gap-3 p-3 bg-gray-50 rounded-lg'>
-            <img 
-              src={tip.type === 'good' ? '/icons/check.svg' : '/icons/warning.svg'} 
-              alt={tip.type} 
-              className='w-5 h-5 mt-0.5'
-            />
-            <p className='text-sm text-gray-700'>{tip.tip}</p>
-          </div>
-        ))}
+
+      {/* Description section */}
+      <div className="mb-6">
+        <h3 className="text-xl font-semibold mb-2">{subtitle}</h3>
+        <p className="text-gray-600 mb-4">
+          This score represents how well your resume is likely to perform in Applicant Tracking Systems used by employers.
+        </p>
+
+        {/* Suggestions list */}
+        <div className="space-y-3">
+          {suggestions && suggestions.length > 0 ? (
+            suggestions.map((suggestion, index) => (
+              <div key={index} className="flex items-start gap-3">
+                <img
+                  src={suggestion.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"}
+                  alt={suggestion.type === "good" ? "Check" : "Warning"}
+                  className="w-5 h-5 mt-1"
+                />
+                <p className={suggestion.type === "good" ? "text-green-700" : "text-amber-700"}>
+                  {suggestion.tip}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No suggestions available</p>
+          )}
+        </div>
       </div>
+
+      {/* Closing encouragement */}
+      <p className="text-gray-700 italic">
+        Keep refining your resume to improve your chances of getting past ATS filters and into the hands of recruiters.
+      </p>
     </div>
   )
 }

@@ -1,76 +1,162 @@
-import React, { useState } from 'react'
+import { cn } from "~/lib/utils";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionHeader,
+  AccordionItem,
+} from "./Accordion";
 
-interface DetailsProps {
-  feedback: Feedback
-}
-
-const Details = ({ feedback }: DetailsProps) => {
-  const [activeTab, setActiveTab] = useState<'toneAndStyle' | 'content' | 'structure' | 'skills'>('content')
-
-  const tabs = [
-    { key: 'content' as const, label: 'Content', data: feedback.content },
-    { key: 'structure' as const, label: 'Structure', data: feedback.structure },
-    { key: 'toneAndStyle' as const, label: 'Tone & Style', data: feedback.toneAndStyle },
-    { key: 'skills' as const, label: 'Skills', data: feedback.skills },
-  ]
-
-  const activeData = tabs.find(tab => tab.key === activeTab)?.data
-
+const ScoreBadge = ({ score }: { score: number }) => {
   return (
-    <div className='flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm'>
-      <h3 className='text-2xl font-bold text-gray-800'>Detailed Feedback</h3>
-      
-      {/* Tabs */}
-      <div className='flex gap-2 border-b border-gray-200 overflow-x-auto'>
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 font-semibold text-sm transition-colors whitespace-nowrap ${
-              activeTab === tab.key
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div
+          className={cn(
+              "flex flex-row gap-1 items-center px-2 py-0.5 rounded-[96px]",
+              score > 69
+                  ? "bg-badge-green"
+                  : score > 39
+                      ? "bg-badge-yellow"
+                      : "bg-badge-red"
+          )}
+      >
+        <img
+            src={score > 69 ? "/icons/check.svg" : "/icons/warning.svg"}
+            alt="score"
+            className="size-4"
+        />
+        <p
+            className={cn(
+                "text-sm font-medium",
+                score > 69
+                    ? "text-badge-green-text"
+                    : score > 39
+                        ? "text-badge-yellow-text"
+                        : "text-badge-red-text"
+            )}
+        >
+          {score}/100
+        </p>
       </div>
+  );
+};
 
-      {/* Tab Content */}
-      {activeData && (
-        <div className='flex flex-col gap-4 mt-2'>
-          <div className='flex items-center gap-3'>
-            <span className='text-3xl font-bold text-gray-800'>{activeData.score}/100</span>
-            <div className='h-2 flex-1 bg-gray-200 rounded-full overflow-hidden'>
-              <div 
-                className='h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500'
-                style={{ width: `${activeData.score}%` }}
-              />
-            </div>
-          </div>
+const CategoryHeader = ({
+                          title,
+                          categoryScore,
+                        }: {
+  title: string;
+  categoryScore: number;
+}) => {
+  return (
+      <div className="flex flex-row gap-4 items-center py-2">
+        <p className="text-2xl font-semibold">{title}</p>
+        <ScoreBadge score={categoryScore} />
+      </div>
+  );
+};
 
-          <div className='flex flex-col gap-3'>
-            {activeData.tips.map((tip, index) => (
-              <div key={index} className='flex flex-col gap-2 p-4 bg-gray-50 rounded-lg'>
-                <div className='flex items-center gap-2'>
-                  <img 
-                    src={tip.type === 'good' ? '/icons/check.svg' : '/icons/warning.svg'} 
-                    alt={tip.type} 
-                    className='w-5 h-5'
-                  />
-                  <span className='font-semibold text-gray-800'>{tip.tip}</span>
-                </div>
-                {tip.explanation && (
-                  <p className='text-sm text-gray-600 ml-7'>{tip.explanation}</p>
-                )}
+const CategoryContent = ({
+                           tips,
+                         }: {
+  tips: { type: "good" | "improve"; tip: string; explanation: string }[];
+}) => {
+  return (
+      <div className="flex flex-col gap-4 items-center w-full">
+        <div className="bg-gray-50 w-full rounded-lg px-5 py-4 grid grid-cols-2 gap-4">
+          {tips.map((tip, index) => (
+              <div className="flex flex-row gap-2 items-center" key={index}>
+                <img
+                    src={
+                      tip.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"
+                    }
+                    alt="score"
+                    className="size-5"
+                />
+                <p className="text-xl text-gray-500 ">{tip.tip}</p>
               </div>
-            ))}
-          </div>
+          ))}
         </div>
-      )}
-    </div>
-  )
-}
+        <div className="flex flex-col gap-4 w-full">
+          {tips.map((tip, index) => (
+              <div
+                  key={index + tip.tip}
+                  className={cn(
+                      "flex flex-col gap-2 rounded-2xl p-4",
+                      tip.type === "good"
+                          ? "bg-green-50 border border-green-200 text-green-700"
+                          : "bg-yellow-50 border border-yellow-200 text-yellow-700"
+                  )}
+              >
+                <div className="flex flex-row gap-2 items-center">
+                  <img
+                      src={
+                        tip.type === "good"
+                            ? "/icons/check.svg"
+                            : "/icons/warning.svg"
+                      }
+                      alt="score"
+                      className="size-5"
+                  />
+                  <p className="text-xl font-semibold">{tip.tip}</p>
+                </div>
+                <p>{tip.explanation}</p>
+              </div>
+          ))}
+        </div>
+      </div>
+  );
+};
 
-export default Details
+const Details = ({ feedback }: { feedback: Feedback }) => {
+  return (
+      <div className="flex flex-col gap-4 w-full">
+        <Accordion>
+          <AccordionItem id="tone-style">
+            <AccordionHeader itemId="tone-style">
+              <CategoryHeader
+                  title="Tone & Style"
+                  categoryScore={feedback.toneAndStyle.score}
+              />
+            </AccordionHeader>
+            <AccordionContent itemId="tone-style">
+              <CategoryContent tips={feedback.toneAndStyle.tips} />
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem id="content">
+            <AccordionHeader itemId="content">
+              <CategoryHeader
+                  title="Content"
+                  categoryScore={feedback.content.score}
+              />
+            </AccordionHeader>
+            <AccordionContent itemId="content">
+              <CategoryContent tips={feedback.content.tips} />
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem id="structure">
+            <AccordionHeader itemId="structure">
+              <CategoryHeader
+                  title="Structure"
+                  categoryScore={feedback.structure.score}
+              />
+            </AccordionHeader>
+            <AccordionContent itemId="structure">
+              <CategoryContent tips={feedback.structure.tips} />
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem id="skills">
+            <AccordionHeader itemId="skills">
+              <CategoryHeader
+                  title="Skills"
+                  categoryScore={feedback.skills.score}
+              />
+            </AccordionHeader>
+            <AccordionContent itemId="skills">
+              <CategoryContent tips={feedback.skills.tips} />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+  );
+};
+
+export default Details;
